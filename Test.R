@@ -1,15 +1,9 @@
 library(dplyr)
 library(stringi)
 
-
-# 20 unique employees
-# 80 unique counterparties 
-# 80% of Calum's calls are to HSBC
-# 30% of all calls from firm are to HSBC 
-
 set.seed(123)
 
-N <- 3000
+N <- 1000
 employee_names <- c("Oliver", "George", "Harry", "Jack", "Jacob", "Noah", "Charlie", "Muhammad", "Thomas", "Oscar",
                     "William", "James", "Henry", "Leo", "Alfie", "Joshua", "Freddie", "Archie", "Ethan", "Calum")
 counterparties <- c("Goldman Sachs", "JP Morgan", "Morgan Stanley", "Citigroup", "Bank of America",
@@ -35,7 +29,16 @@ employee_data <- data.frame(
   employee_name = rep(employee_names, each = N / length(employee_names))
 )
 
-counterparty_data <- sample(counterparties, N, replace = TRUE)
+set_counterparties_for_employee <- function(employee_id, num_counterparties) {
+  
+  employee_counterparties <- sample(counterparties, num_counterparties)
+  
+  rep(employee_counterparties, length.out = N / length(employee_ids))
+}
+
+counterparty_data <- unlist(lapply(employee_ids, function(id) {
+  set_counterparties_for_employee(id, sample(10:15, 1))
+}))
 
 hsbc_indices <- sample(1:N, N * 0.3)
 counterparty_data[hsbc_indices] <- "HSBC"
@@ -44,14 +47,18 @@ calum_indices <- which(employee_data$employee_name == "Calum")
 calum_hsbc_indices <- sample(calum_indices, length(calum_indices) * 0.8)
 counterparty_data[calum_hsbc_indices] <- "HSBC"
 
+start_date <- as.Date("2023-01-01")
+end_date <- as.Date("2023-12-31")
+dates <- sample(seq.Date(start_date, end_date, by = "day"), N, replace = TRUE)
+uk_dates <- format(dates, "%d/%m/%Y")
+
 df1 <- data.frame(
+  call_id = 1:N,
+  date = uk_dates,
   employee_name = employee_data$employee_name,
   employee_id = employee_data$employee_id,
   counterparty = counterparty_data
 )
-
-# Rest of calls are randomly distributed 
-df1$ipc_counterparty <- stri_rand_strings(N, 10)
 
 # Save dataset to CSV
 write.csv(df1, "vox_eg.csv", row.names = FALSE)
